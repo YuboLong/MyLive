@@ -4,7 +4,6 @@ package com.longyb.mylive.server.entities;
 2020年1月2日 下午3:36:21
 **/
 
-import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -16,6 +15,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.longyb.mylive.amf.AMF0;
+import com.longyb.mylive.server.cfg.MyLiveConfig;
 import com.longyb.mylive.server.rtmp.Constants;
 import com.longyb.mylive.server.rtmp.messages.AudioMessage;
 import com.longyb.mylive.server.rtmp.messages.RtmpMediaMessage;
@@ -52,9 +52,8 @@ public class Stream {
 	int videoTimestamp;
 	int audioTimestamp;
 
-	boolean saveFlvToFile = true;
-	String flvSavePath = "D:/rtmp_flv";
-	DataOutputStream flvout;
+ 
+	FileOutputStream flvout;
 	boolean flvHeadAndMetadataWritten = false;
 
 	Set<Channel> httpFLvSubscribers;
@@ -64,7 +63,7 @@ public class Stream {
 		httpFLvSubscribers = new LinkedHashSet<>();
 		content = new ArrayList<>();
 		this.streamName = streamName;
-		if (saveFlvToFile) {
+		if (MyLiveConfig.INSTANCE.isSaveFlvFile()) {
 			createFileStream();
 		}
 	}
@@ -106,7 +105,7 @@ public class Stream {
 		}
 
 		content.add(msg);
-		if (saveFlvToFile) {
+		if (MyLiveConfig.INSTANCE.isSaveFlvFile()) {
 			writeFlv(msg);
 		}
 		broadCastToSubscribers(msg);
@@ -194,11 +193,11 @@ public class Stream {
 	}
 
 	private void createFileStream() {
-		File f = new File(flvSavePath + "/" + streamName.getApp() + "_" + streamName.getName());
+		File f = new File(MyLiveConfig.INSTANCE.getSaveFlVFilePath() + "/" + streamName.getApp() + "_" + streamName.getName());
 		try {
 			FileOutputStream fos = new FileOutputStream(f);
-			DataOutputStream dos = new DataOutputStream(fos);
-			flvout = dos;
+			 
+			flvout = fos;
 
 		} catch (IOException e) {
 			log.error("create file : {} failed", e);
@@ -268,7 +267,7 @@ public class Stream {
 	}
 
 	public synchronized void sendEofToAllSubscriberAndClose() {
-		if (saveFlvToFile && flvout != null) {
+		if (MyLiveConfig.INSTANCE.isSaveFlvFile() && flvout != null) {
 			try {
 				flvout.close();
 			} catch (IOException e) {
@@ -278,7 +277,6 @@ public class Stream {
 		for (Channel sc : subscribers) {
 			sc.writeAndFlush(UserControlMessageEvent.streamEOF(Constants.DEFAULT_STREAM_ID))
 					.addListener(ChannelFutureListener.CLOSE);
-			;
 
 		}
 

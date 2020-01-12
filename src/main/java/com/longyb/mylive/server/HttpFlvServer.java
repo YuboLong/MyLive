@@ -14,11 +14,13 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.HttpRequestDecoder;
 import io.netty.handler.codec.http.HttpResponseEncoder;
 import io.netty.util.concurrent.DefaultEventExecutorGroup;
+import lombok.extern.slf4j.Slf4j;
 
 /**
 @author longyubo
 2020年1月7日 下午2:55:47
 **/
+@Slf4j
 public class HttpFlvServer {
 
 	private int port;
@@ -52,6 +54,7 @@ public class HttpFlvServer {
 				}).option(ChannelOption.SO_BACKLOG, 128).childOption(ChannelOption.SO_KEEPALIVE, true);
 
 		channelFuture = b.bind(port).sync();
+		log.info("HttpFlv server start , listen at :{}",port);
 
 	}
 }

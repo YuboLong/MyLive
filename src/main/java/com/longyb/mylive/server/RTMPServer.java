@@ -49,6 +49,8 @@ public class RTMPServer {
 				}).option(ChannelOption.SO_BACKLOG, 128).childOption(ChannelOption.SO_KEEPALIVE, true);
 
 		channelFuture = b.bind(port).sync();
+		
+		log.info("RTMP Server start , listen at :{}",port);
 
 	}
 
