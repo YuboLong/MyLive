@@ -1,4 +1,4 @@
-# MyLive -- A  Rtmp server implemention in java for live streamming
+# MyLive -- A  Rtmp server implemention in java for live streaming
 
 ### Introdution
 MyLive is a rtmp server java implementation for live streaming.

@@ -40,13 +40,13 @@ public class ChunkDecoder extends ReplayingDecoder<DecodeState> {
 
 		DecodeState state = state();
 
-		if(state== null) {
+		if (state == null) {
 			state(DecodeState.STATE_HEADER);
 		}
 		if (state == DecodeState.STATE_HEADER) {
 			RtmpHeader rtmpHeader = readHeader(in);
-//			log.info("rtmpHeader read:{}",rtmpHeader);
-			
+			log.debug("rtmpHeader read:{}", rtmpHeader);
+
 			completeHeader(rtmpHeader);
 			currentCsid = rtmpHeader.getCsid();
 
@@ -58,12 +58,15 @@ public class ChunkDecoder extends ReplayingDecoder<DecodeState> {
 			}
 
 			currentPayload = inCompletePayload.get(rtmpHeader.getCsid());
-			if(currentPayload==null) {
-				//when fmt=3 and previous body  completely read, the previous msgLength play the role of length
-				RtmpHeader previousHeader = prevousHeaders.get(rtmpHeader.getCsid());				
-				currentPayload=Unpooled.buffer(previousHeader.messageLength, previousHeader.messageLength);
+			if (currentPayload == null) {
+				// when fmt=3 and previous body completely read, the previous msgLength play the
+				// role of length
+				RtmpHeader previousHeader = prevousHeaders.get(rtmpHeader.getCsid());
+				log.debug("current payload null,previous header:{}", previousHeader);
+				currentPayload = Unpooled.buffer(previousHeader.getMessageLength(), previousHeader.getMessageLength());
+				inCompletePayload.put(rtmpHeader.getCsid(), currentPayload);
+				log.debug("current payload assign as :{}",currentPayload);
 			}
-		
 
 			checkpoint(DecodeState.STATE_PAYLOAD);
 		} else if (state == DecodeState.STATE_PAYLOAD) {
@@ -92,7 +95,7 @@ public class ChunkDecoder extends ReplayingDecoder<DecodeState> {
 				// we need chunksize to decode the chunk
 				SetChunkSize scs = (SetChunkSize) msg;
 				clientChunkSize = scs.getChunkSize();
-				log.info("------------>client set chunkSize to :{}",clientChunkSize);
+				log.debug("------------>client set chunkSize to :{}", clientChunkSize);
 			} else {
 				out.add(msg);
 			}
@@ -104,10 +107,10 @@ public class ChunkDecoder extends ReplayingDecoder<DecodeState> {
 		RtmpHeader rtmpHeader = new RtmpHeader();
 
 		// alway from the beginning
-		int headerLength=0;
+		int headerLength = 0;
 
 		byte firstByte = in.readByte();
-		headerLength+=1;
+		headerLength += 1;
 
 		// CHUNK HEADER is divided into
 		// BASIC HEADER
@@ -122,13 +125,13 @@ public class ChunkDecoder extends ReplayingDecoder<DecodeState> {
 		if (csid == 0) {
 			// 2 byte form
 			csid = in.readByte() & 0xff + 64;
-			headerLength+=1;
+			headerLength += 1;
 		} else if (csid == 1) {
 			// 3 byte form
 			byte secondByte = in.readByte();
 			byte thirdByte = in.readByte();
 			csid = (thirdByte & 0xff) << 8 + (secondByte & 0xff) + 64;
-			headerLength+=2;
+			headerLength += 2;
 		} else if (csid >= 2) {
 			// that's it!
 		}
@@ -145,14 +148,13 @@ public class ChunkDecoder extends ReplayingDecoder<DecodeState> {
 			int messageLength = in.readMedium();
 			short messageTypeId = (short) (in.readByte() & 0xff);
 			int messageStreamId = in.readIntLE();
-			headerLength+=11;
-			if(timestamp==MAX_TIMESTAMP) {
+			headerLength += 11;
+			if (timestamp == MAX_TIMESTAMP) {
 				long extendedTimestamp = in.readInt();
 				rtmpHeader.setExtendedTimestamp(extendedTimestamp);
-				headerLength+=4;
+				headerLength += 4;
 			}
 
-			
 			rtmpHeader.setTimestamp(timestamp);
 			rtmpHeader.setMessageTypeId(messageTypeId);
 			rtmpHeader.setMessageStreamId(messageStreamId);
@@ -165,13 +167,13 @@ public class ChunkDecoder extends ReplayingDecoder<DecodeState> {
 			int messageLength = in.readMedium();
 			short messageType = (short) (in.readByte() & 0xff);
 
-			headerLength+=7;
-			if(timestampDelta==MAX_TIMESTAMP) {
+			headerLength += 7;
+			if (timestampDelta == MAX_TIMESTAMP) {
 				long extendedTimestamp = in.readInt();
 				rtmpHeader.setExtendedTimestamp(extendedTimestamp);
-				headerLength+=4;
+				headerLength += 4;
 			}
-			
+
 			rtmpHeader.setTimestampDelta(timestampDelta);
 			rtmpHeader.setMessageLength(messageLength);
 			rtmpHeader.setMessageTypeId(messageType);
@@ -179,15 +181,15 @@ public class ChunkDecoder extends ReplayingDecoder<DecodeState> {
 			break;
 		case CHUNK_FMT_2: {
 			int timestampDelta = in.readMedium();
-			headerLength+=3;
+			headerLength += 3;
 			rtmpHeader.setTimestampDelta(timestampDelta);
-			
-			if(timestampDelta==MAX_TIMESTAMP) {
+
+			if (timestampDelta == MAX_TIMESTAMP) {
 				long extendedTimestamp = in.readInt();
 				rtmpHeader.setExtendedTimestamp(extendedTimestamp);
-				headerLength+=4;
+				headerLength += 4;
 			}
-			
+
 		}
 			break;
 
@@ -201,10 +203,8 @@ public class ChunkDecoder extends ReplayingDecoder<DecodeState> {
 
 		}
 
-		// EXTENDED TIMESTAMP
-		
 		rtmpHeader.setHeaderLength(headerLength);
-		
+
 		return rtmpHeader;
 	}
 

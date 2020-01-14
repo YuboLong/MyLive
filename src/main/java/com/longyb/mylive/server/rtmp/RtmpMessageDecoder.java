@@ -121,7 +121,7 @@ public class RtmpMessageDecoder {
 			break;
 
 		default:
-			log.debug("message type id {} payload {}", messageTypeId, payload);
+			log.info("message type id {} payload {}", messageTypeId, payload);
 			break;
 		}
 		if (result != null) {

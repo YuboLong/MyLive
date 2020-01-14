@@ -29,10 +29,13 @@ public class HttpFlvServer {
 
 	EventLoopGroup eventLoopGroup;
 	StreamManager streamManager;
+	int handlerThreadPoolSize;
+	
 
-	public HttpFlvServer(int port, StreamManager sm) {
+	public HttpFlvServer(int port, StreamManager sm, int threadPoolSize) {
 		this.port = port;
 		this.streamManager = sm;
+		this.handlerThreadPoolSize = threadPoolSize;
 	}
 	
 	

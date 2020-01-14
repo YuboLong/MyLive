@@ -87,7 +87,7 @@ public class Stream {
 			}
 
 			if (vm.isH264KeyFrame()) {
-				log.info("video key frame in stream :{}", streamName);
+				log.debug("video key frame in stream :{}", streamName);
 				content.clear();
 			}
 		}
@@ -259,7 +259,7 @@ public class Stream {
 				if (next.isActive()) {
 					next.writeAndFlush(wrappedBuffer);
 				} else {
-					iterator.remove();
+					httpIte.remove();
 				}
 			}
 		}

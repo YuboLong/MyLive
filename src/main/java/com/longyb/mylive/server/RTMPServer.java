@@ -27,17 +27,20 @@ public class RTMPServer {
 
 	EventLoopGroup eventLoopGroup;
 	StreamManager streamManager;
-
-	public RTMPServer(int port, StreamManager sm) {
+	int handlerThreadPoolSize;
+	
+	
+	public RTMPServer(int port, StreamManager sm,int threadPoolSize) {
 		this.port = port;
 		this.streamManager = sm;
+		this.handlerThreadPoolSize = threadPoolSize;
 	}
 
 	public void run() throws Exception {
 		eventLoopGroup = new NioEventLoopGroup();
 
 		ServerBootstrap b = new ServerBootstrap();
-		DefaultEventExecutorGroup executor = new DefaultEventExecutorGroup(8);// TODO: USE A CONFIG VALUE
+		DefaultEventExecutorGroup executor = new DefaultEventExecutorGroup(handlerThreadPoolSize);
 		b.group(eventLoopGroup).channel(NioServerSocketChannel.class)
 				.childHandler(new ChannelInitializer<SocketChannel>() {
 					@Override

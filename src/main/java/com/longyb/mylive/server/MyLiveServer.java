@@ -20,8 +20,9 @@ public class MyLiveServer {
 		StreamManager streamManager = new StreamManager();
 
 		int rtmpPort = MyLiveConfig.INSTANCE.getRtmpPort();
+		int handlerThreadPoolSize=MyLiveConfig.INSTANCE.getHandlerThreadPoolSize();
 
-		RTMPServer rtmpServer = new RTMPServer(rtmpPort, streamManager);
+		RTMPServer rtmpServer = new RTMPServer(rtmpPort, streamManager,handlerThreadPoolSize);
 		rtmpServer.run();
 
 		if (!MyLiveConfig.INSTANCE.isEnableHttpFlv()) {
@@ -29,7 +30,7 @@ public class MyLiveServer {
 		}
 
 		int httpPort = MyLiveConfig.INSTANCE.getHttpFlvPort();
-		HttpFlvServer httpFlvServer = new HttpFlvServer(httpPort, streamManager);
+		HttpFlvServer httpFlvServer = new HttpFlvServer(httpPort, streamManager,handlerThreadPoolSize);
 		httpFlvServer.run();
 
 	}
@@ -37,7 +38,6 @@ public class MyLiveServer {
 	private static void readConfig() {
 		ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 		try {
-
 			File file = new File("./mylive.yaml");
 
 			MyLiveConfig cfg = mapper.readValue(file, MyLiveConfig.class);

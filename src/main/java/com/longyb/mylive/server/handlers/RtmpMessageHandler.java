@@ -21,8 +21,6 @@ import com.longyb.mylive.server.rtmp.messages.UserControlMessageEvent;
 import com.longyb.mylive.server.rtmp.messages.VideoMessage;
 import com.longyb.mylive.server.rtmp.messages.WindowAcknowledgementSize;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import lombok.extern.slf4j.Slf4j;
@@ -271,7 +269,12 @@ public class RtmpMessageHandler extends SimpleChannelInboundHandler<RtmpMessage>
 		log.info("client connect {} ", msg);
 
 		String app = (String) ((Map) msg.getCommand().get(2)).get("app");
-
+		Integer clientRequestEncode = (Integer) ((Map) msg.getCommand().get(2)).get("objectEncoding");
+		if(clientRequestEncode !=null && clientRequestEncode.intValue()==3) {
+			log.error("client :{} request AMF3 encoding but server currently doesn't support",ctx);
+			ctx.close();
+			return ;
+		}
 		streamName = new StreamName(app, null);
 
 		int ackSize = 5000000;
