@@ -2,7 +2,7 @@
 
 ### Introdution
 MyLive is a rtmp server java implementation for live streaming.
-It's not a full feature rtmp server,seek and play2 are not supported.amf0 is only supported amf version
+It's not a full feature rtmp server,seek and play2 are not supported. Amf0 is the only supported amf version.
 
 
 ### Features 
