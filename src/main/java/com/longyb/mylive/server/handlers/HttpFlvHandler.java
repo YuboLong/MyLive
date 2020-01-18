@@ -21,11 +21,14 @@ import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
+import lombok.extern.slf4j.Slf4j;
+
 import static io.netty.handler.codec.http.HttpHeaderNames.*;
 
 /**
  * @author longyubo 2020年1月7日 下午3:19:43
  **/
+@Slf4j
 public class HttpFlvHandler extends SimpleChannelInboundHandler<HttpObject> {
 
 	StreamManager streamManager;
@@ -46,7 +49,14 @@ public class HttpFlvHandler extends SimpleChannelInboundHandler<HttpObject> {
 				return;
 			}
 
-			StreamName sn = new StreamName(appAndStreamName.get(0), appAndStreamName.get(1));
+			
+			String app=appAndStreamName.get(0);
+			String streamName= appAndStreamName.get(1);
+			if(streamName.endsWith(".flv")) {
+				streamName=streamName.substring(0, streamName.length()-4);
+			}
+			StreamName sn = new StreamName(app, streamName);
+			log.info("http stream :{} requested",sn);
 			Stream stream = streamManager.getStream(sn);
 
 			if (stream == null) {

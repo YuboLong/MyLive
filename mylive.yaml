@@ -3,7 +3,7 @@ enableHttpFlv: true
 httpFlvPort: 8080
 
 # true stands for saving rtmp stream user pushed as a flv file . false do nothing
-saveFlvFile: false
+saveFlvFile: true
 # the path where flv stores , must be a existing folder like /home/flv . 
 saveFlVFilePath: D:/flv
 # the size of thread pool that write rtmp and flv packages 

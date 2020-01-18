@@ -13,7 +13,6 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.HttpRequestDecoder;
 import io.netty.handler.codec.http.HttpResponseEncoder;
-import io.netty.util.concurrent.DefaultEventExecutorGroup;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -29,6 +28,7 @@ public class HttpFlvServer {
 
 	EventLoopGroup eventLoopGroup;
 	StreamManager streamManager;
+	//not used currently
 	int handlerThreadPoolSize;
 	
 
@@ -43,7 +43,7 @@ public class HttpFlvServer {
 		eventLoopGroup = new NioEventLoopGroup();
 
 		ServerBootstrap b = new ServerBootstrap();
-		DefaultEventExecutorGroup executor = new DefaultEventExecutorGroup(8);// TODO: USE A CONFIG VALUE
+ 
 		b.group(eventLoopGroup).channel(NioServerSocketChannel.class)
 				.childHandler(new ChannelInitializer<SocketChannel>() {
 					@Override

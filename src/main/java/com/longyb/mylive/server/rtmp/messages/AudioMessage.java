@@ -40,4 +40,8 @@ public class AudioMessage extends RtmpMediaMessage {
 
 		return audioData;
 	}
+	
+	public boolean isAACAudioSpecificConfig(){
+		return audioData.length>1 && audioData[1]==0;
+	}
 }
