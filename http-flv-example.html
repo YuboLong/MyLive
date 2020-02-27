@@ -1,0 +1,53 @@
+<html>
+
+<head>
+    <title>FlvTest</title>
+
+</head>
+
+<script src="flv.js"></script>
+
+<body>
+    <h1>HTTP FLV TEST</h1>
+    <video id="videoElement" height="800px" width="450px"></video>
+    <button onclick="goLoad()">Load</button>
+    <button onclick="goPlay()">Play</button>
+
+
+</body>
+
+
+<script>
+    var flvPlayer;
+    function goLoad() {
+        console.log("load click!");
+        console.log("mse live support:" + flvjs.getFeatureList().mseLiveFlvPlayback);
+        if (flvjs.isSupported()) {
+            var videoElement = document.getElementById('videoElement');
+            console.log("videoElement:" + videoElement);
+            flvPlayer = flvjs.createPlayer({
+                type: 'flv',
+                isLive: true,
+                url: "/live/first",
+                duration: 0,
+                filesize: 0,
+                enableStashBuffer: false,
+                hasAudio: true,
+                hasVideo: true
+            });
+            flvPlayer.attachMediaElement(videoElement);
+            flvPlayer.load();
+
+
+        }
+    }
+
+
+    function goPlay() {
+        console.log("play button press")
+        flvPlayer.play();
+    }
+
+</script>
+
+</html>
