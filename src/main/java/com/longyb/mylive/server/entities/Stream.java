@@ -270,13 +270,12 @@ public class Stream {
 
 		if (!httpFLvSubscribers.isEmpty()) {
 			byte[] encoded = encodeMediaAsFlvTagAndPrevTagSize(msg);
-			ByteBuf wrappedBuffer = Unpooled.wrappedBuffer(encoded);
+			 
 			Iterator<Channel> httpIte = httpFLvSubscribers.iterator();
-
 			while (httpIte.hasNext()) {
 				Channel next = httpIte.next();
 				if (next.isActive()) {
-					next.writeAndFlush(wrappedBuffer);
+					next.writeAndFlush(Unpooled.wrappedBuffer(encoded));
 				} else {
 					log.info("http channel :{} is not active remove",next);
 					httpIte.remove();
