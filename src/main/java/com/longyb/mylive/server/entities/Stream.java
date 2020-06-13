@@ -54,7 +54,8 @@ public class Stream {
 	int videoTimestamp;
 	int audioTimestamp;
 
- 
+	int obsTimeStamp;
+
 	FileOutputStream flvout;
 	boolean flvHeadAndMetadataWritten = false;
 
@@ -72,6 +73,41 @@ public class Stream {
 
 	public synchronized void addContent(RtmpMediaMessage msg) {
 
+		if (streamName.isObsClient()) {
+			handleObsStream(msg);
+		} else {
+			handleNonObsStream(msg);
+		}
+		
+		if(msg instanceof VideoMessage) {
+			VideoMessage vm=(VideoMessage)msg;
+			if (vm.isAVCDecoderConfigurationRecord()) {
+				log.info("avcDecoderConfigurationRecord  ok");
+				avcDecoderConfigurationRecord = vm;
+			}
+	
+			if (vm.isH264KeyFrame()) {
+				log.debug("video key frame in stream :{}", streamName);
+				content.clear();
+			}
+		}
+		
+		if(msg instanceof AudioMessage) {
+			AudioMessage am=(AudioMessage) msg;
+			if (am.isAACAudioSpecificConfig()) {
+				aacAudioSpecificConfig = am;
+			}
+		}
+		
+
+		content.add(msg);
+		if (MyLiveConfig.INSTANCE.isSaveFlvFile()) {
+			writeFlv(msg);
+		}
+		broadCastToSubscribers(msg);
+	}
+
+	private void handleNonObsStream(RtmpMediaMessage msg) {
 		if (msg instanceof VideoMessage) {
 			VideoMessage vm = (VideoMessage) msg;
 			if (vm.getTimestamp() != null) {
@@ -83,15 +119,7 @@ public class Stream {
 				vm.setTimestamp(videoTimestamp);
 			}
 
-			if (vm.isAVCDecoderConfigurationRecord()) {
-				log.info("avcDecoderConfigurationRecord  ok");
-				avcDecoderConfigurationRecord = vm;
-			}
-
-			if (vm.isH264KeyFrame()) {
-				log.debug("video key frame in stream :{}", streamName);
-				content.clear();
-			}
+		
 		}
 
 		if (msg instanceof AudioMessage) {
@@ -104,17 +132,32 @@ public class Stream {
 				audioTimestamp += am.getTimestampDelta();
 				am.setTimestamp(audioTimestamp);
 			}
-			
-			if(am.isAACAudioSpecificConfig()) {
-				aacAudioSpecificConfig=am;
-			}
-		}
 
-		content.add(msg);
-		if (MyLiveConfig.INSTANCE.isSaveFlvFile()) {
-			writeFlv(msg);
+			
 		}
-		broadCastToSubscribers(msg);
+	}
+
+	private void handleObsStream(RtmpMediaMessage msg) {
+		// OBS rtmp stream is different from FFMPEG
+		// it's timestamp_delta is delta of last packet,not same type of last packet
+
+		// flv only require an absolute timestamp
+		// but rtmp client like vlc require a timestamp-delta,which is relative to last
+		// same media packet.
+		if(msg.getTimestamp()!=null) {
+			obsTimeStamp=msg.getTimestamp();
+		}else		if(msg.getTimestampDelta()!=null) {
+			obsTimeStamp += msg.getTimestampDelta();
+		}
+		msg.setTimestamp(obsTimeStamp);
+		if (msg instanceof VideoMessage) {
+			msg.setTimestampDelta(obsTimeStamp - videoTimestamp);
+			videoTimestamp = obsTimeStamp;
+		}
+		if (msg instanceof AudioMessage) {
+			msg.setTimestampDelta(obsTimeStamp - audioTimestamp);
+			audioTimestamp = obsTimeStamp;
+		}
 	}
 
 	private byte[] encodeMediaAsFlvTagAndPrevTagSize(RtmpMediaMessage msg) {
@@ -123,7 +166,6 @@ public class Stream {
 		int dataSize = data.length;
 		int timestamp = msg.getTimestamp() & 0xffffff;
 		int timestampExtended = ((msg.getTimestamp() & 0xff000000) >> 24);
-
 
 		ByteBuf buffer = Unpooled.buffer();
 
@@ -163,18 +205,18 @@ public class Stream {
 	private byte[] encodeFlvHeaderAndMetadata() {
 		ByteBuf encodeMetaData = encodeMetaData();
 		ByteBuf buf = Unpooled.buffer();
-		
+
 		RtmpMediaMessage msg = content.get(0);
 		int timestamp = msg.getTimestamp() & 0xffffff;
 		int timestampExtended = ((msg.getTimestamp() & 0xff000000) >> 24);
-		
+
 		buf.writeBytes(flvHeader);
 		buf.writeInt(0); // previousTagSize0
 
 		int readableBytes = encodeMetaData.readableBytes();
 		buf.writeByte(0x12); // script
 		buf.writeMedium(readableBytes);
-		//make the first script tag timestamp same as the keyframe 
+		// make the first script tag timestamp same as the keyframe
 		buf.writeMedium(timestamp);
 		buf.writeByte(timestampExtended);
 //		buf.writeInt(0); // timestamp + timestampExtended
@@ -201,17 +243,18 @@ public class Stream {
 		List<Object> meta = new ArrayList<>();
 		meta.add("onMetaData");
 		meta.add(metadata);
-		log.info("Metadata:{}",metadata);
+		log.info("Metadata:{}", metadata);
 		AMF0.encode(buffer, meta);
 
 		return buffer;
 	}
 
 	private void createFileStream() {
-		File f = new File(MyLiveConfig.INSTANCE.getSaveFlVFilePath() + "/" + streamName.getApp() + "_" + streamName.getName());
+		File f = new File(
+				MyLiveConfig.INSTANCE.getSaveFlVFilePath() + "/" + streamName.getApp() + "_" + streamName.getName());
 		try {
 			FileOutputStream fos = new FileOutputStream(f);
-			 
+
 			flvout = fos;
 
 		} catch (IOException e) {
@@ -227,6 +270,7 @@ public class Stream {
 		avcDecoderConfigurationRecord.setTimestamp(content.get(0).getTimestamp());
 		log.info("avcDecoderConfigurationRecord:{}", avcDecoderConfigurationRecord);
 		channel.writeAndFlush(avcDecoderConfigurationRecord);
+
 		for (RtmpMessage msg : content) {
 			channel.writeAndFlush(msg);
 		}
@@ -245,15 +289,15 @@ public class Stream {
 		avcDecoderConfigurationRecord.setTimestamp(content.get(0).getTimestamp());
 		byte[] config = encodeMediaAsFlvTagAndPrevTagSize(avcDecoderConfigurationRecord);
 		channel.writeAndFlush(Unpooled.wrappedBuffer(config));
-		
+
 		// 3. write aacAudioSpecificConfig
-		if(aacAudioSpecificConfig!= null) {
+		if (aacAudioSpecificConfig != null) {
 			aacAudioSpecificConfig.setTimestamp(content.get(0).getTimestamp());
 			byte[] aac = encodeMediaAsFlvTagAndPrevTagSize(aacAudioSpecificConfig);
 			channel.writeAndFlush(Unpooled.wrappedBuffer(aac));
 		}
 		// 4. write content
-		
+
 		for (RtmpMediaMessage msg : content) {
 			channel.writeAndFlush(Unpooled.wrappedBuffer(encodeMediaAsFlvTagAndPrevTagSize(msg)));
 		}
@@ -273,19 +317,18 @@ public class Stream {
 
 		if (!httpFLvSubscribers.isEmpty()) {
 			byte[] encoded = encodeMediaAsFlvTagAndPrevTagSize(msg);
-			ByteBuf wrappedBuffer = Unpooled.wrappedBuffer(encoded);
-			
+
 			Iterator<Channel> httpIte = httpFLvSubscribers.iterator();
 			while (httpIte.hasNext()) {
 				Channel next = httpIte.next();
+				ByteBuf wrappedBuffer = Unpooled.wrappedBuffer(encoded);
 				if (next.isActive()) {
-					ReferenceCountUtil.retain(wrappedBuffer);
 					next.writeAndFlush(wrappedBuffer);
 				} else {
-					log.info("http channel :{} is not active remove",next);
+					log.info("http channel :{} is not active remove", next);
 					httpIte.remove();
 				}
-				ReferenceCountUtil.release(wrappedBuffer);
+
 			}
 		}
 

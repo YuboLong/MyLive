@@ -174,6 +174,7 @@ public class RtmpMessageHandler extends SimpleChannelInboundHandler<RtmpMessage>
 
 		Stream stream = streamManager.getStream(streamName);
 		if (stream == null) {
+			log.info("client play request for stream:{} but not exist.",streamName);
 			// NetStream.Play.StreamNotFound
 			RtmpCommandMessage onStatus = onStatus("error", "NetStream.Play.StreamNotFound", "No Such Stream");
 
@@ -222,13 +223,17 @@ public class RtmpMessageHandler extends SimpleChannelInboundHandler<RtmpMessage>
 	private void handlePublish(ChannelHandlerContext ctx, RtmpCommandMessage msg) {
 		log.info("publish :{}", msg);
 		role = Role.Publisher;
-		String name = (String) msg.getCommand().get(3);
-		streamName.setName(name);
-
+		
 		String streamType = (String) msg.getCommand().get(4);
 		if (!"live".equals(streamType)) {
 			log.error("unsupport stream type :{}", streamType);
 			ctx.channel().disconnect();
+		}
+		//OBS client send app and name in connect command
+		if(!streamName.isObsClient()) {
+			String name = (String) msg.getCommand().get(3);
+			streamName.setName(name);
+			streamName.setApp(streamType);
 		}
 
 		createStream(ctx);
@@ -275,7 +280,21 @@ public class RtmpMessageHandler extends SimpleChannelInboundHandler<RtmpMessage>
 			ctx.close();
 			return ;
 		}
-		streamName = new StreamName(app, null);
+		
+		//obs client send app as 'live/xxx'
+		//ffmpeg client send app as 'live'
+		if(app.contains("/")) {
+			String[] split = app.split("/");
+			if(split.length>2) {
+				log.error("client :{} connect command sends a invalid app:{}.Connection Close",ctx,app);
+				ctx.close();
+				return ;
+			}
+			streamName = new StreamName(split[0], split[1],true);
+		}else {
+			streamName = new StreamName(app, null,false);
+		}
+		
 
 		int ackSize = 5000000;
 		WindowAcknowledgementSize was = new WindowAcknowledgementSize(ackSize);

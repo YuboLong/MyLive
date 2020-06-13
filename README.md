@@ -26,7 +26,7 @@ MyLive reads the configuration file "mylive.yaml" placed in the same folder as m
 
 Then you can push streams to rtmp://127.0.0.1/live/yourstream 
 
-Publishing Rtmp streams using FFMPEG and playing rtmp stream by VLC player had been already tested. 
+Publishing Rtmp streams using FFMPEG/OBS and playing rtmp stream by VLC player had been already tested. 
 http-flv is tested with bilibili/flv.js
 
 ### Future Plan

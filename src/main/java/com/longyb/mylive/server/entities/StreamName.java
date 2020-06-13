@@ -12,6 +12,8 @@ public class StreamName {
 	private String app;
 	private String name;
 
+	private boolean obsClient;
+	
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)

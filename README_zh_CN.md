@@ -26,7 +26,7 @@ MyLive会读取和mylive.jar在同一个文件夹下的mylive.yaml配置文件�
 然后就可以推流到rtmp://127.0.0.1/live/yourstream，
 Http-flv流使用 http://127.0.0.1:8080/live/yourstream 访问
 
-FFMPEG 推Rtmp流和VLC player播放Rtmp流已经测试过,HTTP-FLV直播流已经使用bilibili的flv.js测试过
+FFMPEG/OBS 推Rtmp流和VLC player播放Rtmp流已经测试过,HTTP-FLV直播流已经使用bilibili的flv.js测试过
 
 ### 未来计划
 

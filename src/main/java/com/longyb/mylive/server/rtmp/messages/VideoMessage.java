@@ -50,4 +50,12 @@ public class VideoMessage extends RtmpMediaMessage {
 		return videoData;
 	}
 
+	@Override
+	public String toString() {
+		return "VideoMessage [timestampDelta=" + timestampDelta + ", timestamp=" + timestamp + ", inboundHeaderLength="
+				+ inboundHeaderLength + ", inboundBodyLength=" + inboundBodyLength + "]";
+	}
+
+	
+	
 }

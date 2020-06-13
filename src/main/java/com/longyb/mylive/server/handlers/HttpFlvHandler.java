@@ -55,7 +55,7 @@ public class HttpFlvHandler extends SimpleChannelInboundHandler<HttpObject> {
 			if(streamName.endsWith(".flv")) {
 				streamName=streamName.substring(0, streamName.length()-4);
 			}
-			StreamName sn = new StreamName(app, streamName);
+			StreamName sn = new StreamName(app, streamName,false);
 			log.info("http stream :{} requested",sn);
 			Stream stream = streamManager.getStream(sn);
 

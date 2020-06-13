@@ -4,6 +4,8 @@ package com.longyb.mylive.server.rtmp.messages;
 2019年12月16日 下午5:37:47
 **/
 
+import java.util.Arrays;
+
 import com.longyb.mylive.server.rtmp.Constants;
 
 import io.netty.buffer.ByteBuf;
@@ -44,4 +46,13 @@ public class AudioMessage extends RtmpMediaMessage {
 	public boolean isAACAudioSpecificConfig(){
 		return audioData.length>1 && audioData[1]==0;
 	}
+
+	@Override
+	public String toString() {
+		return "AudioMessage [audioData=" + Arrays.toString(audioData) + ", timestampDelta=" + timestampDelta
+				+ ", timestamp=" + timestamp + ", inboundHeaderLength=" + inboundHeaderLength + ", inboundBodyLength="
+				+ inboundBodyLength + "]";
+	}
+	
+	
 }
