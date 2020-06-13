@@ -28,6 +28,7 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.handler.codec.http.DefaultLastHttpContent;
+import io.netty.util.ReferenceCountUtil;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
@@ -246,9 +247,11 @@ public class Stream {
 		channel.writeAndFlush(Unpooled.wrappedBuffer(config));
 		
 		// 3. write aacAudioSpecificConfig
-		aacAudioSpecificConfig.setTimestamp(content.get(0).getTimestamp());
-		byte[] aac = encodeMediaAsFlvTagAndPrevTagSize(aacAudioSpecificConfig);
-		channel.writeAndFlush(Unpooled.wrappedBuffer(aac));
+		if(aacAudioSpecificConfig!= null) {
+			aacAudioSpecificConfig.setTimestamp(content.get(0).getTimestamp());
+			byte[] aac = encodeMediaAsFlvTagAndPrevTagSize(aacAudioSpecificConfig);
+			channel.writeAndFlush(Unpooled.wrappedBuffer(aac));
+		}
 		// 4. write content
 		
 		for (RtmpMediaMessage msg : content) {
@@ -270,16 +273,19 @@ public class Stream {
 
 		if (!httpFLvSubscribers.isEmpty()) {
 			byte[] encoded = encodeMediaAsFlvTagAndPrevTagSize(msg);
-			 
+			ByteBuf wrappedBuffer = Unpooled.wrappedBuffer(encoded);
+			
 			Iterator<Channel> httpIte = httpFLvSubscribers.iterator();
 			while (httpIte.hasNext()) {
 				Channel next = httpIte.next();
 				if (next.isActive()) {
-					next.writeAndFlush(Unpooled.wrappedBuffer(encoded));
+					ReferenceCountUtil.retain(wrappedBuffer);
+					next.writeAndFlush(wrappedBuffer);
 				} else {
 					log.info("http channel :{} is not active remove",next);
 					httpIte.remove();
 				}
+				ReferenceCountUtil.release(wrappedBuffer);
 			}
 		}
 

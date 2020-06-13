@@ -66,6 +66,11 @@ public class HttpFlvHandler extends SimpleChannelInboundHandler<HttpObject> {
 			DefaultHttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
 			response.headers().set(CONTENT_TYPE, "video/x-flv");
 			response.headers().set(TRANSFER_ENCODING, "chunked");
+			//we may need a cross domain configuration in future 
+			response.headers().set(ACCESS_CONTROL_ALLOW_ORIGIN, "*");
+			response.headers().set(ACCESS_CONTROL_ALLOW_METHODS, "GET, POST, PUT,DELETE");
+		    response.headers().set(ACCESS_CONTROL_ALLOW_HEADERS, "Origin, X-Requested-With, Content-Type, Accept");
+          
 			ctx.writeAndFlush(response);
 
 			stream.addHttpFlvSubscriber(ctx.channel());
