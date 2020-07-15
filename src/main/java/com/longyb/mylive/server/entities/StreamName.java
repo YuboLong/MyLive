@@ -11,9 +11,9 @@ import lombok.Data;
 public class StreamName {
 	private String app;
 	private String name;
-
-	private boolean obsClient;
 	
+	private boolean obsClient;
+ 
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
@@ -34,7 +34,7 @@ public class StreamName {
 		} else if (!name.equals(other.name))
 			return false;
 		return true;
-	}
+	}	 
 
 	@Override
 	public int hashCode() {
@@ -44,5 +44,4 @@ public class StreamName {
 		result = prime * result + ((name == null) ? 0 : name.hashCode());
 		return result;
 	}
-
 }

@@ -112,6 +112,11 @@ public class RtmpMessageHandler extends SimpleChannelInboundHandler<RtmpMessage>
 			// save on metadata
 			Map<String, Object> properties = (Map<String, Object>) msg.getData().get(2);
 			properties.remove("filesize");
+			
+			String encoder = (String)properties.get("encoder");
+			if(encoder!=null && encoder.contains("obs")) {
+				streamName.setObsClient(true);
+			}
 			Stream stream = streamManager.getStream(streamName);
 			stream.setMetadata(properties);
 		}
@@ -229,12 +234,10 @@ public class RtmpMessageHandler extends SimpleChannelInboundHandler<RtmpMessage>
 			log.error("unsupport stream type :{}", streamType);
 			ctx.channel().disconnect();
 		}
-		//OBS client send app and name in connect command
-		if(!streamName.isObsClient()) {
-			String name = (String) msg.getCommand().get(3);
-			streamName.setName(name);
-			streamName.setApp(streamType);
-		}
+		 
+		String name = (String) msg.getCommand().get(3);
+		streamName.setName(name);
+		streamName.setApp(streamType);
 
 		createStream(ctx);
 		// reply a onStatus
@@ -280,21 +283,8 @@ public class RtmpMessageHandler extends SimpleChannelInboundHandler<RtmpMessage>
 			ctx.close();
 			return ;
 		}
-		
-		//obs client send app as 'live/xxx'
-		//ffmpeg client send app as 'live'
-		if(app.contains("/")) {
-			String[] split = app.split("/");
-			if(split.length>2) {
-				log.error("client :{} connect command sends a invalid app:{}.Connection Close",ctx,app);
-				ctx.close();
-				return ;
-			}
-			streamName = new StreamName(split[0], split[1],true);
-		}else {
-			streamName = new StreamName(app, null,false);
-		}
-		
+	 
+		streamName = new StreamName(app, null,false);
 
 		int ackSize = 5000000;
 		WindowAcknowledgementSize was = new WindowAcknowledgementSize(ackSize);
