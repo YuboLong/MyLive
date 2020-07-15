@@ -5,13 +5,13 @@
 
 </head>
 
-<script src="flv.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/flv.js/1.5.0/flv.min.js"></script>
 
 <body>
     <h1>HTTP FLV TEST</h1>
-    <video id="videoElement" height="800px" width="450px"></video>
-    <button onclick="goLoad()">Load</button>
-    <button onclick="goPlay()">Play</button>
+    <video id="videoElement" height="720px" width="1280px"></video>
+    <button onclick="goLoad()">Click Load First</button>
+    <button onclick="goPlay()">Then Click Play</button>
 
 
 </body>
@@ -28,7 +28,7 @@
             flvPlayer = flvjs.createPlayer({
                 type: 'flv',
                 isLive: true,
-                url: "/live/first",
+                url: "http://127.0.0.1:8080/live/first",
                 duration: 0,
                 filesize: 0,
                 enableStashBuffer: false,
