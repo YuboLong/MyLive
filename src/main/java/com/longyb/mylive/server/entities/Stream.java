@@ -337,6 +337,7 @@ public class Stream {
 	public synchronized void sendEofToAllSubscriberAndClose() {
 		if (MyLiveConfig.INSTANCE.isSaveFlvFile() && flvout != null) {
 			try {
+				flvout.flush();
 				flvout.close();
 			} catch (IOException e) {
 				log.error("close file:{} failed", flvout);
